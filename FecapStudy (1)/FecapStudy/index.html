@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FecapStudy — Plataforma de Apoio ao Estudo</title>
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<header class="topo">
+  <div class="marca"><span class="logo">F</span><div><h1>FecapStudy</h1><small>Aula 9 · Oficina PBL · Mini-Projeto PI</small></div></div>
+  <div class="conexao" id="conexao" title="Estado do BackendEstudoAPI">
+    <span class="ponto" id="conexaoPonto"></span><span id="conexaoTexto">Verificando backend…</span>
+    <button class="btn-mini" id="btnReconectar" type="button">Atualizar</button>
+    <span class="usuario-chip" id="usuarioChip" hidden><b id="usuarioNome"></b><small id="usuarioPerfil"></small></span>
+    <button class="btn-mini" id="btnSair" type="button" hidden>Sair</button>
+  </div>
+</header>
+
+<!-- ===================== LOGIN ===================== -->
+<section class="login-fundo" id="telaLogin">
+  <div class="login-card">
+    <div class="login-marca"><span class="logo">F</span><h2>FecapStudy</h2><p>Plataforma de Apoio ao Estudo</p></div>
+    <div class="login-abas" role="tablist">
+      <button class="login-aba ativa" data-modo="entrar" type="button">Entrar</button>
+      <button class="login-aba" data-modo="cadastrar" type="button">Criar conta</button>
+    </div>
+    <p class="login-erro" id="loginErro" role="alert" hidden></p>
+
+    <form id="formLogin" autocomplete="on">
+      <label class="campo">E-mail<input type="email" id="loginEmail" placeholder="lucas.silva@edu.fecap.br" required autocomplete="username"></label>
+      <label class="campo">Código de acesso <small>(RA ou cargo cadastrado)</small>
+        <input type="password" id="loginCodigo" placeholder="RA-2026101" required autocomplete="current-password"></label>
+      <button class="btn roxo" type="submit">Entrar</button>
+      <p class="login-dica">Contas de demonstração: <code>lucas.silva@edu.fecap.br</code> / <code>RA-2026101</code> · <code>carlos@email.com</code> / <code>Responsável Legal</code> · <code>helena@fecap.br</code> / <code>Coordenação PI</code></p>
+    </form>
+
+    <form id="formCadastro" hidden autocomplete="off">
+      <label class="campo">Nome completo<input id="cadNome" required></label>
+      <label class="campo">E-mail<input type="email" id="cadEmail" required></label>
+      <label class="campo">Perfil
+        <select id="cadPerfil"><option value="Discente">Discente</option><option value="Responsavel">Responsável</option><option value="Administrador">Administrador</option></select></label>
+      <label class="campo">Código de acesso <small>(RA, parentesco ou cargo — usado para entrar)</small><input id="cadCodigo" required></label>
+      <label class="campo" id="cadRespBox">Responsável<select id="cadResp"></select></label>
+      <button class="btn roxo" type="submit">Criar conta</button>
+    </form>
+    <div class="login-status" id="loginStatus"></div>
+  </div>
+</section>
+
+<div id="app" hidden>
+
+<nav class="abas" role="tablist">
+  <button class="aba ativa" data-aba="estudar" role="tab">📚 Estudar</button>
+  <button class="aba" data-aba="servidor" role="tab">🗄️ Servidor / Relatório</button>
+  <button class="aba" data-aba="trilha" role="tab">🧭 Trilha &amp; Plano</button>
+  <button class="aba" data-aba="missoes" role="tab">🧪 Missões 1–8</button>
+</nav>
+
+<div id="avisoOffline" class="aviso" hidden>
+  Backend não encontrado em <code>http://localhost:5080</code>. Execute <code>iniciar_backend.bat</code> e clique em <b>Atualizar</b>.
+  Enquanto isso, os estudos ficam só na memória desta página (dados de demonstração).
+</div>
+
+<main>
+<!-- ===================== ABA: ESTUDAR ===================== -->
+<section class="painel ativo" id="aba-estudar">
+  <div class="perfis">
+    <article class="card perfil"><h2>Discente</h2>
+      <label class="campo">Quem está estudando?
+        <select id="selDiscente"></select></label>
+      <p class="resumo" id="resumoDiscente"></p>
+    </article>
+    <article class="card perfil"><h2>Responsável</h2><p class="resumo" id="resumoResponsavel"></p></article>
+    <article class="card perfil"><h2>Administração</h2><p class="resumo" id="resumoAdmin"></p></article>
+  </div>
+
+  <div class="duas-colunas">
+    <article class="card">
+      <h2>Nova sessão de estudo</h2>
+      <form id="formSessao" autocomplete="off">
+        <label class="campo">Disciplina<select id="selDisciplina"></select></label>
+        <label class="campo">Modalidade
+          <select id="selModalidade">
+            <option value="Pomodoro">🍅 Pomodoro</option>
+            <option value="Exercicios">✏️ Exercícios</option>
+            <option value="Leitura">📖 Leitura</option>
+          </select></label>
+        <label class="campo">Duração (minutos)<input type="number" id="inpDuracao" min="1" max="480" value="25" required></label>
+        <div class="extra" data-modalidade="Pomodoro">
+          <label class="campo">Ciclos completos<input type="number" id="inpCiclos" min="0" value="1"></label>
+        </div>
+        <div class="extra" data-modalidade="Exercicios" hidden>
+          <label class="campo">Total de questões<input type="number" id="inpQuestoes" min="1" value="10"></label>
+          <label class="campo">Acertos<input type="number" id="inpAcertos" min="0" value="7"></label>
+        </div>
+        <div class="extra" data-modalidade="Leitura" hidden>
+          <label class="campo">Páginas lidas<input type="number" id="inpPaginas" min="0" value="12"></label>
+          <label class="check"><input type="checkbox" id="chkResumo"> Fiz resumo (+25 XP)</label>
+        </div>
+        <button class="btn" type="submit">Registrar Estudo</button>
+      </form>
+
+      <details class="sobrecarga">
+        <summary>Atalhos (sobrecarga de <code>registrarEstudo</code>)</summary>
+        <form id="formRapido" class="linha">
+          <b>Forma 2 · rápido</b>
+          <input type="number" id="inpRapidoMin" min="1" max="480" value="50" aria-label="minutos">
+          <span>min (Pomodoro padrão)</span>
+          <button class="btn-mini" type="submit">Registrar</button>
+        </form>
+        <form id="formHorario" class="linha">
+          <b>Forma 3 · por horário</b>
+          <input type="number" id="inpHoraIni" min="0" max="23" value="19" aria-label="hora início">h →
+          <input type="number" id="inpHoraFim" min="1" max="24" value="20" aria-label="hora fim">h ·
+          <input type="number" id="inpHoraPag" min="0" value="15" aria-label="páginas"> pág.
+          <button class="btn-mini" type="submit">Registrar</button>
+        </form>
+      </details>
+    </article>
+
+    <article class="card">
+      <h2>Meta semanal</h2>
+      <div class="barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="barra"><div class="barra-fill" id="barraFill"></div></div>
+      <p class="meta-texto" id="metaTexto"></p>
+
+      <div class="acoes">
+        <label class="campo inline">Canal
+          <select id="selCanal"><option>E-mail</option><option>WhatsApp</option><option>Painel</option></select></label>
+        <button class="btn secundario" id="btnNotificar" type="button">🔔 Notificar Responsável</button>
+      </div>
+      <form id="formMeta" class="linha">
+        <b>Responsável redefine a meta:</b>
+        <input type="number" id="inpNovaMeta" value="240" aria-label="nova meta em minutos"> min
+        <button class="btn-mini" type="submit">Salvar meta</button>
+      </form>
+
+      <h3>Histórico da sessão</h3>
+      <ul class="lista" id="listaHistorico"></ul>
+      <h3>Central de alertas</h3>
+      <ul class="lista alertas" id="listaAlertas"></ul>
+    </article>
+  </div>
+</section>
+
+<!-- ===================== ABA: SERVIDOR ===================== -->
+<section class="painel" id="aba-servidor">
+  <article class="card">
+    <h2>Dados gravados no backend</h2>
+    <div class="acoes">
+      <button class="btn" id="btnCarregarHistorico" type="button">Carregar Histórico do Servidor / Relatório</button>
+      <small id="servidorInfo">Mostra os dados do discente selecionado na aba Estudar.</small>
+    </div>
+    <div id="relatorio" class="relatorio" hidden></div>
+    <div class="tabela-wrap">
+      <table id="tabelaSessoes" hidden>
+        <thead><tr><th>#</th><th>Data</th><th>Disciplina</th><th>Modalidade</th><th>Min</th><th>XP</th><th>Feedback</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== ABA: TRILHA ===================== -->
+<section class="painel" id="aba-trilha">
+  <div class="duas-colunas">
+    <article class="card">
+      <h2>Trilha de estudo <small>(agregação ◇)</small></h2>
+      <p class="resumo" id="trilhaTitulo"></p>
+      <ul class="lista" id="listaTrilha"></ul>
+      <p class="meta-texto" id="trilhaCarga"></p>
+      <h3>Cadastrar disciplina no catálogo</h3>
+      <form id="formDisciplina" class="grade-form">
+        <input id="inpDiscCodigo" placeholder="Código (ADS205)" required>
+        <input id="inpDiscNome" placeholder="Nome da disciplina" required>
+        <input id="inpDiscCat" placeholder="Categoria" value="Computação" required>
+        <input type="number" id="inpDiscHoras" placeholder="Horas/sem" value="4">
+        <button class="btn-mini" type="submit">Adicionar à trilha e ao servidor</button>
+      </form>
+    </article>
+    <article class="card">
+      <h2>Plano de estudo semanal <small>(composição ◆)</small></h2>
+      <form id="formPlano" class="linha">
+        <select id="selDia"><option>Segunda</option><option>Terça</option><option>Quarta</option><option>Quinta</option><option>Sexta</option><option>Sábado</option><option>Domingo</option></select>
+        <input type="number" id="inpPlanoMin" min="1" value="45" aria-label="minutos planejados"> min
+        <button class="btn-mini" type="submit">Adicionar item</button>
+      </form>
+      <ul class="lista" id="listaPlano"></ul>
+      <p class="meta-texto" id="planoTotal"></p>
+    </article>
+  </div>
+</section>
+
+<!-- ===================== ABA: MISSÕES ===================== -->
+<section class="painel" id="aba-missoes">
+  <article class="card">
+    <h2>Teste de mesa das Missões 1 a 8</h2>
+    <p>Executa as classes do domínio e mostra a saída (equivalente ao “programa principal” de cada missão).</p>
+    <button class="btn" id="btnMissoes" type="button">▶ Executar demonstração</button>
+    <pre class="console" id="consoleMissoes">Clique em “Executar demonstração”.</pre>
+  </article>
+</section>
+</main>
+
+</div><!-- /app -->
+
+<div id="toasts" aria-live="polite"></div>
+
+<script src="js/dominio.js"></script>
+<script src="js/cliente.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

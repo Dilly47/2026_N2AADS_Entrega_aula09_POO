@@ -1,0 +1,2 @@
+1) Dê dois cliques em Backend\iniciar_backend.bat (porta 5080).
+2) Abra index.html no navegador (duplo clique, não precisa de servidor nem de instalação).
